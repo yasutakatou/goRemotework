@@ -10,6 +10,21 @@ package main
 import (
 )
 
+type (
+	HANDLE uintptr
+	HWND   HANDLE
+)
+
+var (
+	user32                  = syscall.MustLoadDLL("user32.dll")
+	procEnumWindows         = user32.MustFindProc("EnumWindows")
+	procGetWindowTextW      = user32.MustFindProc("GetWindowTextW")
+	procSetActiveWindow     = user32.MustFindProc("SetActiveWindow")
+	procSetForegroundWindow = user32.MustFindProc("SetForegroundWindow")
+	procGetForegroundWindow = user32.MustFindProc("GetForegroundWindow")
+	procGetWindowRect       = user32.MustFindProc("GetWindowRect")
+)
+
 type tasksData struct {
 	REGEX  string
     LIMIT  int
@@ -41,25 +56,116 @@ func main() {
 	debug = bool(*_Debug)
 	logging = bool(*_Logging)
 
-	if Exists(*_TasksConfig) == true {
-		loadConfig(0)
-	} else {
+	if  loadTasksConfig(*_TasksConfig) == false {
 		fmt.Printf("Fail to read task config file: %v\n", *_TasksConfig)
 		os.Exit(1)
 	}
 
-    if loadConfig(1) == true {
+    if loadScheduleConfig(*_ScheduleConfig) == true {
         go func() {
 			for {
 				time.Sleep(time.Second * time.Duration(*_Loop))
-				//scheduleAlert()
+				//scheduleAlert(*_Verbose)
 			}
 		}()
     }
 
     for {
         time.Sleep(time.Second * time.Duration(*_Loop))
-        //scheduleAlert()
+        taskAlert(*_Verbose)
     }
     os.Exit(0)
+}
+
+func debugLog(message string) {
+	var file *os.File
+	var err error
+
+	if debug == true {
+		fmt.Println(message)
+	}
+
+	if logging == false {
+		return
+	}
+
+	const layout = "2006-01-02_15"
+	const layout2 = "2006/01/02 15:04:05"
+	t := time.Now()
+	filename := t.Format(layout) + ".log"
+	logHead := "[" + t.Format(layout2) + "] "
+
+	if Exists(filename) == true {
+		file, err = os.OpenFile(filename, os.O_WRONLY|os.O_APPEND, 0666)
+	} else {
+		file, err = os.OpenFile(filename, os.O_WRONLY|os.O_CREATE, 0666)
+	}
+
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+	defer file.Close()
+	fmt.Fprintln(file, logHead+message)
+}
+
+func loadTasksConfig(configFile string) bool {
+	debugLog(" -- " + configFile + " --")
+	fp, err := os.Open(configFile)
+	if err != nil {
+		debugLog(configFile + " not found")
+		return false
+	}
+	defer fp.Close()
+
+	scanner := bufio.NewScanner(fp)
+
+	for scanner.Scan() {
+		buf := scanner.Text()
+		debugLog(buf)
+		strs := strings.Split(buf, "\t")
+		if len(strs) == 3 {
+			tasks = append(tasks, tasksData{REGEX: strs[0],LIMIT: strs[1], COMMAND: strs[2]})
+		}
+	}
+
+	if err = scanner.Err(); err != nil {
+		debugLog(configFile + " error")
+		return false
+	}
+
+	if tasks == nil {
+		return false
+	}
+	return true
+}
+
+func loadScheduleConfig(configFile string) bool {
+	debugLog(" -- " + configFile + " --")
+	fp, err := os.Open(configFile)
+	if err != nil {
+		debugLog(configFile + " not found")
+		return false
+	}
+	defer fp.Close()
+
+	scanner := bufio.NewScanner(fp)
+
+	for scanner.Scan() {
+		buf := scanner.Text()
+		debugLog(buf)
+		if len(strs) == 2 {
+			schedules = append(schedules, scheduleData{DATE: strs[0],COMMAND: strs[1]})
+		}
+	}
+
+	if err = scanner.Err(); err != nil {
+		debugLog(configFile + " error")
+		return false
+	}
+
+	if schedules == nil {
+		return false
+	}
+	return true
 }
