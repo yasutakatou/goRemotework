@@ -14,24 +14,27 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/exec"
 	"regexp"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 	"unsafe"
 )
 
 type taskListsData struct {
-	NAME string
-	TIME int
+	NAME  string
+	TIME  int
+	LIMIT int
 }
 
 type tasksData struct {
 	NAME    string
 	REGEX   string
 	LIMIT   int
-	CURRENT int
 	COMMAND string
+	MESSAGE string
 }
 
 type scheduleData struct {
@@ -92,12 +95,35 @@ func taskAlert(filename string, duration int) {
 				if tasklists[i].NAME == rule.NAME {
 					tasklists[i].TIME = tasklists[i].TIME + duration
 					tFlag = true
+
+					if rule.LIMIT != 0 && len(rule.COMMAND) == 0 {
+						if tasklists[i].LIMIT-duration < 0 {
+							tasklists[i].LIMIT = rule.LIMIT
+							execCommand(rule.COMMAND, rule.MESSAGE, rule.NAME)
+						} else {
+							tasklists[i].LIMIT = tasklists[i].LIMIT - duration
+						}
+					}
 				}
 			}
 			if tFlag == false {
 				tasklists = append(tasklists, taskListsData{NAME: rule.NAME, TIME: duration})
 			}
 		}
+	}
+}
+
+func execCommand(command, message, taskname string) {
+	debugLog("command: " + command)
+	debugLog("message: " + message)
+
+	message = strings.Replace(message, "{}", taskname, -1)
+	cmd := exec.Command("cmd", "/c", command+message)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		debugLog(fmt.Sprint(err) + ": " + string(output))
+	} else {
+		debugLog(string(output))
 	}
 }
 
@@ -158,13 +184,13 @@ func loadTasksConfig(configFile string) bool {
 		} else if err != nil {
 			panic(err)
 		}
-		if len(record) == 4 {
+		if len(record) == 5 {
 			i, err := strconv.Atoi(record[2])
 			if err == nil {
-				tasks = append(tasks, tasksData{NAME: record[0], REGEX: record[1], LIMIT: i, CURRENT: i, COMMAND: record[3]})
+				tasks = append(tasks, tasksData{NAME: record[0], REGEX: record[1], LIMIT: i, COMMAND: record[3], MESSAGE: record[4]})
 				fmt.Println(record)
 			} else if record[1] == "NO" && record[2] == "NO" {
-				tasks = append(tasks, tasksData{NAME: record[0], REGEX: record[1], LIMIT: 0, CURRENT: 0, COMMAND: ""})
+				tasks = append(tasks, tasksData{NAME: record[0], REGEX: record[1], LIMIT: 0, COMMAND: "", MESSAGE: ""})
 				fmt.Println(record)
 			}
 		}
