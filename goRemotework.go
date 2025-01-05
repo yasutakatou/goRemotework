@@ -14,21 +14,23 @@ import (
 	"io"
 	"log"
 	"os"
+	"regexp"
 	"strconv"
 	"syscall"
 	"time"
 	"unsafe"
 )
 
-var (
-	debug, logging bool
-	schedules      []scheduleData
-	tasks          []tasksData
-)
+type taskListsData struct {
+	NAME string
+	TIME int
+}
 
 type tasksData struct {
+	NAME    string
 	REGEX   string
 	LIMIT   int
+	CURRENT int
 	COMMAND string
 }
 
@@ -37,14 +39,20 @@ type scheduleData struct {
 	COMMAND string
 }
 
+var (
+	debug, logging bool
+	schedules      []scheduleData
+	tasks          []tasksData
+	tasklists      []taskListsData
+)
+
 func main() {
 	_Debug := flag.Bool("debug", false, "[-debug=debug mode (true is enable)]")
 	_Logging := flag.Bool("log", false, "[-log=logging mode (true is enable)]")
 	_Loop := flag.Int("loop", 60, "[-loop=incident check loop time (Seconds). ]")
-	//_Verbose := flag.Bool("verbose", false, "[-verbose=incident output verbose (true is enable)]")
 	_ScheduleConfig := flag.String("scheduleconfig", "schedule.ini", "[-scheduleconfig=specify the configuration file for scheduled alerts.]")
 	_TasksConfig := flag.String("tasksconfig", "tasks.ini", "[-tasksconfig=specify the task aggregation config file.]")
-	//_OutputConfig := flag.String("outputconfig", "output.txt", "[-outputconfig=specify the output file of the work history.]")
+	_OutputConfig := flag.String("outputconfig", "output.txt", "[-outputconfig=specify the output file of the work history.]")
 
 	flag.Parse()
 
@@ -65,12 +73,32 @@ func main() {
 		}()
 	}
 
-	// for {
-	//     time.Sleep(time.Second * time.Duration(*_Loop))
-	//     taskAlert(*_Verbose)
-	// }
-	fmt.Println(getCurrentWindow())
+	for {
+		time.Sleep(time.Second * time.Duration(*_Loop))
+		taskAlert(*_OutputConfig, *_Loop)
+	}
 	os.Exit(0)
+}
+
+func taskAlert(filename string, duration int) {
+	title := getCurrentWindow()
+
+	for _, rule := range tasks {
+		debugLog("ruleRegex: " + rule.REGEX)
+		ruleRegex := regexp.MustCompile(rule.REGEX)
+		if ruleRegex.MatchString(title) == true {
+			tFlag := false
+			for i := 0; i < len(tasklists); i++ {
+				if tasklists[i].NAME == rule.NAME {
+					tasklists[i].TIME = tasklists[i].TIME + duration
+					tFlag = true
+				}
+			}
+			if tFlag == false {
+				tasklists = append(tasklists, taskListsData{NAME: rule.NAME, TIME: duration})
+			}
+		}
+	}
 }
 
 func debugLog(message string) {
@@ -130,13 +158,13 @@ func loadTasksConfig(configFile string) bool {
 		} else if err != nil {
 			panic(err)
 		}
-		if len(record) == 3 {
-			i, err := strconv.Atoi(record[1])
+		if len(record) == 4 {
+			i, err := strconv.Atoi(record[2])
 			if err == nil {
-				tasks = append(tasks, tasksData{REGEX: record[0], LIMIT: i, COMMAND: record[2]})
+				tasks = append(tasks, tasksData{NAME: record[0], REGEX: record[1], LIMIT: i, CURRENT: i, COMMAND: record[3]})
 				fmt.Println(record)
 			} else if record[1] == "NO" && record[2] == "NO" {
-				tasks = append(tasks, tasksData{REGEX: record[0], LIMIT: 0, COMMAND: ""})
+				tasks = append(tasks, tasksData{NAME: record[0], REGEX: record[1], LIMIT: 0, CURRENT: 0, COMMAND: ""})
 				fmt.Println(record)
 			}
 		}
