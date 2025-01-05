@@ -20,18 +20,10 @@ import (
 	"unsafe"
 )
 
-type (
-	HANDLE uintptr
-	HWND   HANDLE
-)
-
 var (
-	user32                  = syscall.MustLoadDLL("user32.dll")
-	procGetWindowTextW      = user32.MustFindProc("GetWindowTextW")
-	procGetForegroundWindow = user32.MustFindProc("GetForegroundWindow")
-	debug, logging          bool
-	schedules               []scheduleData
-	tasks                   []tasksData
+	debug, logging bool
+	schedules      []scheduleData
+	tasks          []tasksData
 )
 
 type tasksData struct {
@@ -77,7 +69,7 @@ func main() {
 	//     time.Sleep(time.Second * time.Duration(*_Loop))
 	//     taskAlert(*_Verbose)
 	// }
-	fmt.Println(getWindow())
+	fmt.Println(getCurrentWindow())
 	os.Exit(0)
 }
 
@@ -186,22 +178,36 @@ func loadScheduleConfig(configFile string) bool {
 	return true
 }
 
-func GetWindowText(hwnd syscall.Handle, str *uint16, maxCount int32) (len int32, err error) {
-	r0, _, e1 := syscall.Syscall(procGetWindowTextW.Addr(), 3, uintptr(hwnd), uintptr(unsafe.Pointer(str)), uintptr(maxCount))
-	if len = int32(r0); len == 0 {
-		if e1 != 0 {
-			err = error(e1)
-		} else {
-			err = syscall.EINVAL
-		}
-	}
-	return
-}
+func getCurrentWindow() string {
+	//https://stakiran.hatenablog.com/entry/2019/08/19/191433
 
-func getWindow() string {
-	hwnd, _, _ := syscall.Syscall(procGetForegroundWindow.Addr(), 6, 0, 0, 0)
-	if debug == true {
-		fmt.Printf("currentWindow: handle=0x%x\n", hwnd)
+	user32, err := syscall.LoadDLL("user32.dll")
+	if err != nil {
+		panic(err)
 	}
-	return ""
+	defer user32.Release()
+
+	procGetForegroundWindow, err := user32.FindProc("GetForegroundWindow")
+	if err != nil {
+		panic(err)
+	}
+	hwnd, _, _ := procGetForegroundWindow.Call()
+
+	procGetWindowTextLength, err := user32.FindProc("GetWindowTextLengthW")
+	if err != nil {
+		panic(err)
+	}
+	textLength, _, _ := procGetWindowTextLength.Call(hwnd)
+	textLength = textLength + 1
+
+	procGetWindowText, err := user32.FindProc("GetWindowTextW")
+	if err != nil {
+		panic(err)
+	}
+
+	buf := make([]uint16, textLength)
+	procGetWindowText.Call(hwnd, uintptr(unsafe.Pointer(&buf[0])), textLength)
+
+	text := syscall.UTF16ToString(buf)
+	return text
 }
