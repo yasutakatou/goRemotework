@@ -76,6 +76,7 @@ func main() {
 		}()
 	}
 
+	tasklists = append(tasklists, taskListsData{NAME: "OTHER", TIME: 0, LIMIT: 0})
 	for {
 		time.Sleep(time.Second * time.Duration(*_Loop))
 		taskAlert(*_OutputConfig, *_Loop)
@@ -85,21 +86,25 @@ func main() {
 
 func taskAlert(filename string, duration int) {
 	title := getCurrentWindow()
+	debugLog("title: " + title)
 
+	mFlag := false
 	for _, rule := range tasks {
 		debugLog("ruleRegex: " + rule.REGEX)
 		ruleRegex := regexp.MustCompile(rule.REGEX)
 		if ruleRegex.MatchString(title) == true {
+			mFlag = true
+			debugLog("matchRegex: " + rule.REGEX)
 			tFlag := false
 			for i := 0; i < len(tasklists); i++ {
 				if tasklists[i].NAME == rule.NAME {
 					tasklists[i].TIME = tasklists[i].TIME + duration
 					tFlag = true
 
-					if rule.LIMIT != 0 && len(rule.COMMAND) == 0 {
-						if tasklists[i].LIMIT-duration < 0 {
+					if rule.LIMIT != 0 && len(rule.COMMAND) != 0 && len(rule.MESSAGE) != 0 {
+						if tasklists[i].LIMIT-duration <= 0 {
 							tasklists[i].LIMIT = rule.LIMIT
-							execCommand(rule.COMMAND, rule.MESSAGE, rule.NAME)
+							go execCommand(rule.COMMAND, rule.MESSAGE, rule.NAME)
 						} else {
 							tasklists[i].LIMIT = tasklists[i].LIMIT - duration
 						}
@@ -107,9 +112,22 @@ func taskAlert(filename string, duration int) {
 				}
 			}
 			if tFlag == false {
-				tasklists = append(tasklists, taskListsData{NAME: rule.NAME, TIME: duration})
+				if rule.LIMIT != 0 && len(rule.COMMAND) != 0 && len(rule.MESSAGE) != 0 {
+					tasklists = append(tasklists, taskListsData{NAME: rule.NAME, TIME: duration, LIMIT: rule.LIMIT})
+				} else {
+					tasklists = append(tasklists, taskListsData{NAME: rule.NAME, TIME: duration, LIMIT: 0})
+				}
 			}
 		}
+	}
+
+	if mFlag == false {
+		tasklists[0].TIME = tasklists[0].TIME + duration
+	}
+
+	fmt.Println(" - - - tasklists - - - ")
+	for _, rule := range tasklists {
+		fmt.Println(rule.NAME + " " + strconv.Itoa(rule.TIME) + " " + strconv.Itoa(rule.LIMIT))
 	}
 }
 
@@ -118,7 +136,7 @@ func execCommand(command, message, taskname string) {
 	debugLog("message: " + message)
 
 	message = strings.Replace(message, "{}", taskname, -1)
-	cmd := exec.Command("cmd", "/c", command+message)
+	cmd := exec.Command("cmd", "/c", command+" "+message)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		debugLog(fmt.Sprint(err) + ": " + string(output))
@@ -189,7 +207,7 @@ func loadTasksConfig(configFile string) bool {
 			if err == nil {
 				tasks = append(tasks, tasksData{NAME: record[0], REGEX: record[1], LIMIT: i, COMMAND: record[3], MESSAGE: record[4]})
 				fmt.Println(record)
-			} else if record[1] == "NO" && record[2] == "NO" {
+			} else if record[2] == "NO" && record[3] == "NO" {
 				tasks = append(tasks, tasksData{NAME: record[0], REGEX: record[1], LIMIT: 0, COMMAND: "", MESSAGE: ""})
 				fmt.Println(record)
 			}
