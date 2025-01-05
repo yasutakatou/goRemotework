@@ -3,21 +3,21 @@
  *
  * @author    yasutakatou
  * @copyright 2025 yasutakatou
- * @license   
+ * @license
  */
 package main
 
 import (
-	"syscall"
+	"encoding/csv"
 	"flag"
 	"fmt"
-	"os"
-	"time"
 	"io"
 	"log"
-	"strings"
+	"os"
+	"strconv"
+	"syscall"
+	"time"
 	"unsafe"
-	"bufio"
 )
 
 type (
@@ -43,56 +43,56 @@ type RECTdata struct {
 }
 
 type tasksData struct {
-	REGEX  string
-    LIMIT  int
-    COMMAND string
+	REGEX   string
+	LIMIT   int
+	COMMAND string
 }
 
 type scheduleData struct {
-    DATE   string
-    COMMAND string
+	DATE    string
+	COMMAND string
 }
 
 var (
 	debug, logging bool
-	schedules              []scheduleData
-	tasks                  []tasksData
+	schedules      []scheduleData
+	tasks          []tasksData
 )
 
 func main() {
 	_Debug := flag.Bool("debug", false, "[-debug=debug mode (true is enable)]")
 	_Logging := flag.Bool("log", false, "[-log=logging mode (true is enable)]")
 	_Loop := flag.Int("loop", 60, "[-loop=incident check loop time (Seconds). ]")
-    //_Verbose := flag.Bool("verbose", false, "[-verbose=incident output verbose (true is enable)]")
-    _ScheduleConfig := flag.String("scheduleconfig", "schedule.ini", "[-scheduleconfig=specify the configuration file for scheduled alerts.]")
-    _TasksConfig := flag.String("tasksconfig", "tasks.ini", "[-tasksconfig=specify the task aggregation config file.]")
-    //_OutputConfig := flag.String("outputconfig", "output.txt", "[-outputconfig=specify the output file of the work history.]")
+	//_Verbose := flag.Bool("verbose", false, "[-verbose=incident output verbose (true is enable)]")
+	_ScheduleConfig := flag.String("scheduleconfig", "schedule.ini", "[-scheduleconfig=specify the configuration file for scheduled alerts.]")
+	_TasksConfig := flag.String("tasksconfig", "tasks.ini", "[-tasksconfig=specify the task aggregation config file.]")
+	//_OutputConfig := flag.String("outputconfig", "output.txt", "[-outputconfig=specify the output file of the work history.]")
 
 	flag.Parse()
 
 	debug = bool(*_Debug)
 	logging = bool(*_Logging)
 
-	if  loadTasksConfig(*_TasksConfig) == false {
+	if loadTasksConfig(*_TasksConfig) == false {
 		fmt.Printf("Fail to read task config file: %v\n", *_TasksConfig)
 		os.Exit(1)
 	}
 
-    if loadScheduleConfig(*_ScheduleConfig) == true {
-        go func() {
+	if loadScheduleConfig(*_ScheduleConfig) == true {
+		go func() {
 			for {
 				time.Sleep(time.Second * time.Duration(*_Loop))
 				//scheduleAlert(*_Verbose)
 			}
 		}()
-    }
+	}
 
-    // for {
-    //     time.Sleep(time.Second * time.Duration(*_Loop))
-    //     taskAlert(*_Verbose)
-    // }
-	ListWindow()
-    os.Exit(0)
+	// for {
+	//     time.Sleep(time.Second * time.Duration(*_Loop))
+	//     taskAlert(*_Verbose)
+	// }
+	//ListWindow()
+	os.Exit(0)
 }
 
 func debugLog(message string) {
@@ -134,53 +134,69 @@ func Exists(filename string) bool {
 
 func loadTasksConfig(configFile string) bool {
 	debugLog(" -- " + configFile + " --")
-	reader := bufio.NewReader(strings.NewReader(configFile))
+	var fp *os.File
+	var err error
+	fp, err = os.Open(configFile)
+	if err != nil {
+		panic(err)
+	}
+	defer fp.Close()
 
+	reader := csv.NewReader(fp)
+	reader.Comma = '\t'
+	reader.LazyQuotes = true
 	for {
-		buf, err := reader.ReadString('\n')
-		debugLog(buf)
-		// strs := strings.Split(buf, "\t")
-		// if len(strs) == 3 {
-		// 	tasks = append(tasks, tasksData{REGEX: strs[0],LIMIT: strs[1], COMMAND: strs[2]})
-		// }
-
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
+		record, err := reader.Read()
+		if err == io.EOF {
+			break
+		} else if err != nil {
 			panic(err)
 		}
+		if len(record) == 3 {
+			i, err := strconv.Atoi(record[1])
+			if err == nil {
+				tasks = append(tasks, tasksData{REGEX: record[0], LIMIT: i, COMMAND: record[2]})
+				fmt.Println(record)
+			} else if record[1] == "NO" && record[2] == "NO" {
+				tasks = append(tasks, tasksData{REGEX: record[0], LIMIT: 0, COMMAND: ""})
+				fmt.Println(record)
+			}
+		}
 	}
-
-	// if tasks == nil {
-	// 	return false
-	// }
+	if tasks == nil {
+		return false
+	}
 	return true
 }
 
 func loadScheduleConfig(configFile string) bool {
 	debugLog(" -- " + configFile + " --")
-	reader := bufio.NewReader(strings.NewReader(configFile))
+	var fp *os.File
+	var err error
+	fp, err = os.Open(configFile)
+	if err != nil {
+		panic(err)
+	}
+	defer fp.Close()
 
+	reader := csv.NewReader(fp)
+	reader.Comma = '\t'
+	reader.LazyQuotes = true
 	for {
-		buf, err := reader.ReadString('\n')
-		debugLog(buf)
-		// strs := strings.Split(buf, "\t")
-		// if len(strs) == 2 {
-		// 	schedules = append(schedules, scheduleData{DATE: strs[0],COMMAND: strs[1]})
-		// }
-
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
+		record, err := reader.Read()
+		if err == io.EOF {
+			break
+		} else if err != nil {
 			panic(err)
 		}
+		if len(record) == 2 {
+			schedules = append(schedules, scheduleData{DATE: record[0], COMMAND: record[1]})
+			fmt.Println(record)
+		}
 	}
-
-	// if schedules == nil {
-	// 	return false
-	// }
+	if schedules == nil {
+		return false
+	}
 	return true
 }
 
@@ -220,7 +236,6 @@ func EnumWindows(enumFunc uintptr, lparam uintptr) (err error) {
 	return
 }
 
-
 func ListWindow() []string {
 	var rect RECTdata
 
@@ -246,6 +261,7 @@ func ListWindow() []string {
 		}
 		return 1
 	})
+
 	EnumWindows(cb, 0)
 	return ret
 }
