@@ -18,7 +18,6 @@ import (
 	"regexp"
 	"sort"
 	"strconv"
-	"strings"
 	"syscall"
 	"time"
 	"unsafe"
@@ -54,7 +53,7 @@ var (
 func main() {
 	_Debug := flag.Bool("debug", false, "[-debug=debug mode (true is enable)]")
 	_Logging := flag.Bool("log", false, "[-log=logging mode (true is enable)]")
-	_Loop := flag.Int("loop", 60, "[-loop=incident check loop time (Seconds). ]")
+	_Loop := flag.Int("loop", 5, "[-loop=incident check loop time (Seconds). ]")
 	_ScheduleConfig := flag.String("scheduleconfig", "schedule.ini", "[-scheduleconfig=specify the configuration file for scheduled alerts.]")
 	_TasksConfig := flag.String("tasksconfig", "tasks.ini", "[-tasksconfig=specify the task aggregation config file.]")
 	_OutputConfig := flag.String("outputconfig", "output.txt", "[-outputconfig=specify the output file of the work history.]")
@@ -98,7 +97,7 @@ func scheduleAlert() {
 		dateRegex := regexp.MustCompile(rule.DATE)
 		if dateRegex.MatchString(nowDate) == true {
 			debugLog("dateRegex: " + rule.DATE)
-			go execCommand(rule.COMMAND, rule.MESSAGE, "")
+			go execCommand(rule.COMMAND, rule.MESSAGE)
 		}
 
 	}
@@ -124,7 +123,7 @@ func taskAlert(filename string, duration int) {
 					if rule.LIMIT != 0 && len(rule.COMMAND) != 0 && len(rule.MESSAGE) != 0 {
 						if tasklists[i].LIMIT-duration <= 0 {
 							tasklists[i].LIMIT = rule.LIMIT
-							go execCommand(rule.COMMAND, rule.MESSAGE, rule.NAME)
+							go execCommand(rule.COMMAND, rule.MESSAGE)
 						} else {
 							tasklists[i].LIMIT = tasklists[i].LIMIT - duration
 						}
@@ -170,11 +169,8 @@ func taskAlert(filename string, duration int) {
 
 }
 
-func execCommand(command, message, taskname string) {
-	debugLog("command: " + command)
-	debugLog("message: " + message)
-
-	message = strings.Replace(message, "{}", taskname, -1)
+func execCommand(command, message string) {
+	debugLog("command: " + command + " " + message)
 	cmd := exec.Command("cmd", "/c", command+" "+message)
 	output, err := cmd.CombinedOutput()
 	if err != nil {

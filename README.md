@@ -108,10 +108,8 @@ Go言語なのでバイナリファイル消してあげればOK！
 (アラートの設定をPMやシニアエンジニアが行うので、エスカレーションへの障壁がさがります)
 
 ```
-AWS	.*Amazon Web Services.*	1800	popup.bat	{}escalation
+AWS	.*Amazon Web Services.*	1800	popup.bat	AWS_USe
 ```
-
-※{}は「①」の定義名におきかえられます
 
 アラートを出さないでウィンドウ名と類型時間だけ計測する場合は以下のように③～⑤に「NO」を書きます
 
