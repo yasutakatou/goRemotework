@@ -16,6 +16,7 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"syscall"
@@ -40,6 +41,7 @@ type tasksData struct {
 type scheduleData struct {
 	DATE    string
 	COMMAND string
+	MESSAGE string
 }
 
 var (
@@ -71,7 +73,7 @@ func main() {
 		go func() {
 			for {
 				time.Sleep(time.Second * time.Duration(*_Loop))
-				//scheduleAlert(*_Verbose)
+				scheduleAlert()
 			}
 		}()
 	}
@@ -82,6 +84,24 @@ func main() {
 		taskAlert(*_OutputConfig, *_Loop)
 	}
 	os.Exit(0)
+}
+
+func scheduleAlert() {
+	wdays := [...]string{"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"}
+
+	const layout = "2006/01/02 15:04:05"
+	t := time.Now()
+	nowDate := t.Format(layout) + " " + wdays[t.Weekday()]
+	debugLog("nowDate: " + nowDate)
+
+	for _, rule := range schedules {
+		dateRegex := regexp.MustCompile(rule.DATE)
+		if dateRegex.MatchString(nowDate) == true {
+			debugLog("dateRegex: " + rule.DATE)
+			go execCommand(rule.COMMAND, rule.MESSAGE, "")
+		}
+
+	}
 }
 
 func taskAlert(filename string, duration int) {
@@ -122,13 +142,32 @@ func taskAlert(filename string, duration int) {
 	}
 
 	if mFlag == false {
-		tasklists[0].TIME = tasklists[0].TIME + duration
+		for i := 0; i < len(tasklists); i++ {
+			if tasklists[i].NAME == "OTHER" {
+				tasklists[i].TIME = tasklists[i].TIME + duration
+			}
+		}
 	}
+
+	sort.Slice(tasklists, func(i, j int) bool {
+		return tasklists[i].TIME > tasklists[j].TIME
+	})
+
+	file, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE, 0666)
+
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+	defer file.Close()
 
 	fmt.Println(" - - - tasklists - - - ")
 	for _, rule := range tasklists {
 		fmt.Println(rule.NAME + " " + strconv.Itoa(rule.TIME) + " " + strconv.Itoa(rule.LIMIT))
+		fmt.Fprintln(file, rule.NAME+" "+strconv.Itoa(rule.TIME))
 	}
+	fmt.Println(" - - - - - - - - - - ")
+
 }
 
 func execCommand(command, message, taskname string) {
@@ -239,8 +278,8 @@ func loadScheduleConfig(configFile string) bool {
 		} else if err != nil {
 			panic(err)
 		}
-		if len(record) == 2 {
-			schedules = append(schedules, scheduleData{DATE: record[0], COMMAND: record[1]})
+		if len(record) == 3 {
+			schedules = append(schedules, scheduleData{DATE: record[0], COMMAND: record[1], MESSAGE: record[2]})
 			fmt.Println(record)
 		}
 	}
