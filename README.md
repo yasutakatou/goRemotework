@@ -1,98 +1,98 @@
 # goRemotework
-**Go言語製のリモートワーク支援ツール。リモートワークに不慣れなジュニアエンジニアと、適切に管理したいマネージャーとの橋渡しをします**
+**Remote work support tool made in Go language. Bridges the gap between junior engineers who are unfamiliar with remote work and managers who want to manage it properly.**
 
-# リモートワークにおけるジュニアエンジニアをオンボーディングするための課題
-## 証拠
-### ジュニアエンジニアの視点
-- ①日報等に日々の作業をまとめてはいるものの、実際には何にどれくらい時間を消費したのか正確に把握し辛いため、何をやってたのかの可視化が難しい。また、日報を書く時間自体が手間でルーズになりがちになる
-- ②作業に詰まっている時に、どの程度の調査量で報連相すればいいのかの判断が育ってないため、自己解決しようとハマり続けてしまう
-- ③時間の管理能力が育ってないため、カレンダーツールに予定を入れたり工夫はするものの、会議予定とカブったりでうまく時間のアラートを受けられない
+## Challenges of onboarding junior engineers in remote work
+## Evidence.
+### Junior engineer's point of view
+- (1) Although daily work is summarized in daily reports, etc., it is difficult to visualize what was done because it is hard to grasp exactly how much time was actually consumed on what. In addition, the time to write the daily report itself is time-consuming and tends to be loose.
+- (2) When they are stuck in a task, they keep getting stuck in trying to solve it on their own because they have not developed the judgment of how much research they should do to report back.
+- (3) They have not developed the ability to manage their time, and although they try to manage their time by putting appointments on a calendar tool, they cannot receive time alerts properly due to conflicts with meeting schedules.
 
-これらの事実によりオフィス勤務経験の無い(または少ない)ジュニアエンジニアが、時間管理に不慣れなままリモートワークをすることで、結果、仕事力向上が停滞し、逆にマネージャーにより多くの労力がかかることになる
+As a result, junior engineers who have no (or little) experience working in an office and who are not accustomed to time management work remotely, which results in stagnation in improving their work skills and, in turn, requires more effort from managers.
 
-### マネージャーの視点
-続いてジュニアエンジニアの視点の対義としてマネージャーには以下の労力がかかることとなる
+### Manager's Perspective
+As a counterpart to the junior engineer's viewpoint, the following efforts will be required of the manager
 
-- ①がもたらすもの　日報を読んでもスキルプランニングが難しく。KPI的に考えられない。また、サボりや仕事をしていない時間が無いかの管理が必要な点について性善説に基づくしかない
-- ②がもたらすもの　オフィス勤務のように背中越しで、詰まってる雰囲気を察して、適切なタイミングで声掛けができないため、想定より時間をかけて作業をしてしまう
-- ③がもたらすもの　オフィスでは簡単な声掛けで作業漏れを防げたものをチェックする手間が増える。また、指示したタスクに漏れが無いかも確認する必要がある
+- (1) Skills planning is difficult even after reading the daily report; it cannot be thought of in terms of KPI. Also, there is no other way but to base it on the goodness of character in terms of the need to manage whether there is any slacking off or time not spent on work.
+- (2) As in the office, it is not possible to look over one's back and see if one is stuck and call out at the right time, so the work takes longer than expected.
+- (3) Increased time and effort to check things that could have been prevented by a simple voice call in the office. It is also necessary to check whether there are any omissions in the tasks instructed
 
-## 主張
-これは双方の抱える人材育成系のエンジニアリング技術の問題ではなく、**リモートワークがオフィス勤務をベースにしているため、ジュニアエンジニアが慣れることに時間がかかり、シニアエンジニアが適切な指導、育成の機会を与えるのが難しいという点が根本的な問題**として潜在する。<br>
-そのため発生している以下のアンチパターンを参考に、デメリットを最小に軽減する仕組みをもったアプリ、SaaS、ツールがジュニアエンジニア向けに提供されていないと思われる
+## Claim
+This is not an engineering technology problem of the human resource development system that both sides are facing, **but a potential underlying problem is that remote work is based on office work, which takes time for junior engineers to get used to and makes it difficult for senior engineers to provide proper guidance and training opportunities**.<br>
+Therefore, it seems that apps, SaaS, and tools with mechanisms to minimize the disadvantages are not available for junior engineers, with reference to the following anti-patterns that have occurred
 
-### アンチパターン
-- リモート監視ツールを導入し、キーストロークの保存と、インカメから仕事状況を録画し、離籍等を記録。ツールの出力からジュニアエンジニアへの適切な支援を行う
+### anti-pattern
+- Implement remote monitoring tool to save keystrokes and record work status from in-camera to record turnover, etc. Provide appropriate assistance to junior engineers from the output of the tool.
 
-この方法は性悪説に基づいていると言える。心理的安全性の低下、過剰監視、マイクロマネジメント等のオフィス勤務であっても非推奨となる管理行為を実施している
+This method is based on a sexist approach. Management practices that are deprecated even for office work, such as reduced psychological safety, excessive monitoring, micromanagement, etc.
 
-- 全日オフィス勤務　**※メリットも大きいため、主張に基づいたデメリットの側面にフォーカスしている**
+- All-day office work ※**Focuses on the disadvantageous aspects based on the claims, as the advantages are also significant**
 
-生産性の向上目的で出社率を増やす目的に組み込まれているため育成の観点では有効と思われる。しかし、シニアエンジニアやマネージャーの業務がリモートワークに最適化された後の状況では通勤時間を作業時間に当てたいという状況も考えられる
+It seems to be effective from a training perspective, as it is incorporated into the objective of increasing attendance for the purpose of improving productivity. However, there may be situations where senior engineers and managers may want to apply commuting time to work time in a post-optimization situation where their work is optimized for remote work
 
-## 保障
-### 望ましい状態
-- ①について　出来るだけ透過的に個人差の無い可視化と平準的な数値化が出来ている
-- ②について　マネージャー、シニアエンジニアのタイミングで過剰な思考の迷路状態をキャッチアップ出来る
-- ③について　マネージャー、シニアエンジニアと合意した作業タイミングでタスクに取り掛かれる
+## Guarantee
+### Desired state
+- (1) Visualize and quantify the results as transparently and evenly as possible without individual differences.
+- (2) Catch up with managers and senior engineers when they are in a state of excessive maze of thoughts.
+- (3) Tasks can be started at the timing agreed with the manager and senior engineers.
 
-**なぜならジュニアエンジニアへの支援と育成は、対人行為をインタフェースとした一種のインプットとアウトプットであり、エンジニアリング経験を積むために重要なものであるからだ**
+**because support and training for junior engineers is a kind of input and output using interpersonal actions as an interface, and is important for gaining engineering experience**.
 
-# 機能
-- ①**バックグラウンドで使用したアプリケーション情報を収集し、それぞれに消費した時間を計測する**
-  - キーストロークの計測監視未満のレイヤーであるアプリ情報レベルで収集することで過剰監視となる事を防ぐ
-- ②**特定のアプリケーションの操作時間を集計し、一定時間を超える場合に定義されたRunbookを実行し、アラートを自動発砲する**
-  - 煮詰まった状況を自動的にキャッチアップできるようにする。また、マネジメント側がアラート時間を設定することで、報連相への心理的安全を高める
-- ③**指定された時間や日時で通知することで、どのタイミングで何をすれば良いのか気づくことができる**
-  - 会議のカレンダーと切り離す事でタスクの忘却を防ぐ。また、これもマネジメント側と相違の設定により、双方のタスクへのコミット感が醸成される
+# Functions
+- (1) **Collect information on applications used in the background and measure the time spent on each.**
+  - (ollecting at the application information level, which is a layer below keystroke measurement monitoring, prevents excessive monitoring.
+- (2) **Aggregate the time spent on a particular application, and if it exceeds a certain amount of time, run a defined Runbook and automatically trigger an alert.**
+  - Enable automatic catch-up on situations that boil over. Also, management can set the alert time to increase psychological safety for reporting
+- (3) **notify at a specified time and date so that people are aware of what to do at what time**.
+  - Prevent task forgetting by separating it from the meeting calendar. This also fosters a sense of commitment to the task on both sides by setting differences with the management side
 
-# 具体的な動作
-**業務PCが必ず起動、シャットダウンが行われる前提を利用し、①～③の動作を一定間隔でループさせることでツールとして落とし込む**
+# Specific actions
+**Using the assumption that business PCs are always started up and shut down, loop the operations (1) to (3) at regular intervals to make them into a tool**.
 
-- ①バックグラウンドで使用したアプリケーション情報を収集し、それぞれに消費した時間を計測する
-  - フォアグラウンドにあるウィンドウのアプリケーションタイトルを取得し、その時間を類型したものを定期的にファイルに書き出す
-  - 正規表現により、同じアプリでも別のタイトルになるものをシュリンクして同じ項目として集計できる仕組みにより、単一のタスクとして扱うことが出来る　※例えば開いている画面によってタイトルが変わるブラウザ等
-- ②特定のアプリケーションの操作時間を集計し、一定時間を超える場合に定義されたRunbookを実行し、アラートを自動発砲する
-  - ①同様に特定のアプリケーションをフォアグラウンドで動かしている時間が一定時間を超えた場合、定義されたコマンドを実行する
-  - これも①同様に正規表現でシュリンクして同じ項目として集計できる仕組みを設ける
-- ③指定された時間や日時で通知することで、どのタイミングで何をすれば良いのか気づくことができる
-  - 正規表現により、特定の日時、または時間で定義されたコマンドを実行する
+- (1) Collect information on applications used in the background and measure the time consumed for each.
+  - Obtain application titles for windows in the foreground, and write the analogous time to a file on a regular basis
+  - Shrink the same application that has different titles by using regular expressions and aggregate them as the same item so that they can be treated as a single task *For example, a browser whose title changes depending on the open screen.
+- (2) Aggregate the operation time of specific applications, and if the time exceeds a certain amount of time, execute the defined Runbook and automatically issue an alert.
+  - Similarly to (1) above, when the time that a specific application is running in the foreground exceeds a certain time, a defined command is executed.
+  - In the same way as (1) above, set up a mechanism that allows the same items to be aggregated by shrinking them using regular expressions.
+- (3) Notification at a specified time or date and time allows the user to notice what to do at what point in time.
+  - Execute commands defined at a specific date, time, or hour by regular expressions
 
-## 使い方
-各設定ファイルに定義されたルールで動作します。よって以下のようなチームでの運用が望ましいでしょう
+## Usage
+The system operates by the rules defined in each configuration file. Therefore, the following team operation would be desirable
 
-- PMやシニアエンジニアは「タスク集計定義」と「スケジュール通知」の設定ファイルを準備し、チームでファイル共有します
-- Windows起動時に自動起動する設定にします [設定例](https://note.com/bright_clover112/n/ncd35e325b202)
-- 出力される作業時間のファイルを定期的にアップロードするようにします
-- 作業時間のファイルをPMが評価し、適切なマネジメントになるようにチューニングします
+- PMs and senior engineers prepare the “Task Aggregation Definition” and “Schedule Notification” configuration files and share them with the team.
+- Set up the system to start automatically when Windows starts up [example of setting](https://note.com/bright_clover112/n/ncd35e325b202)
+- Upload the output work time file periodically.
+- PM evaluates the work time file and tunes it for proper management.
 
-# 動作画面
-- ①バックグラウンドで使用したアプリケーション情報を収集し、それぞれに消費した時間を計測する
+# Operation screen
+- (1) Collect information on applications used in the background and measure the time consumed for each
 
-フォアグラウンドで操作していたウィンドウで正規表現でマッチしたものを集計します
+Aggregate regular expression matches in windows that were operated in the foreground.
 
 ![image](https://github.com/user-attachments/assets/99e76027-42f7-4da7-ad1f-90607ef72baa)
 
-- ②特定のアプリケーションの操作時間を集計し、一定時間を超える場合に定義されたRunbookを実行し、アラートを自動発砲する
+- (2) Aggregate the operation time of specific applications, and if it exceeds a certain amount of time, run the defined Runbook and automatically fire an alert.
 
-stackoverflowで検索し続けていたのでアラートが出た例
+Example of an alert fired because of continuous search on stackoverflow.
 
 ![image](https://github.com/user-attachments/assets/3737c0ae-4e53-4d22-b437-d96529958674)
 
-- ③指定された時間や日時で通知することで、どのタイミングで何をすれば良いのか気づくことができる
+- (3) Notification at a specified time and date so that you are aware of what to do at what time.
 
-毎時45分になったらポモドーロテクニックで休憩しましょう、な例
+Let's take a break using the Pomodoro Technique at 45 minutes every hour, example.
 
 ![image](https://github.com/user-attachments/assets/6fae4eee-fb2b-4451-a07f-9d65e9a2909e)
 
-# インストール方法
-ツールをこのリポジトリからもってきます
+# How to install
+Get the tools from this repository
 
 ```
 go get github.com/yasutakatou/goRemotework
 ```
 
-それかクローンしてビルドするか
+Or clone and build it.
 
 ```
 git clone https://github.com/yasutakatou/goRemotework
@@ -100,69 +100,69 @@ cd caplint
 go build .
 ```
 
-面倒なら[ここにバイナリファイル置いておくので](https://github.com/yasutakatou/goRemotework/releases)手元で展開するでもOKです
+If it's too much trouble, [you can extract the binary files at hand](https://github.com/yasutakatou/goRemotework/releases).
 
-# アンインストール方法
+# How to uninstall
 
-Go言語なのでバイナリファイル消してあげればOK！
+Since it is Go language, you can delete the binary file!
 
-# 設定ファイル
+# Configuration file
 
-**設定ファイルはtsv(tab split value)形式です。タブ区切りで定義します**
+**Configuration file is in tsv (tab split value) format. Define tab-separated values**.
 
-## タスク集計定義(と、アラートRunbook)
+## Task Aggregation Definition (and Alert Runbook)
 
-この設定ファイルでは集計するタスク名と、(設定する場合)時間超過のアラートを定義する
-
-```
-①定義名 ②集計するウィンドウ名の正規表現 ③時間超過(秒)　④超過時に実行されるコマンド  ⑥「⑤」のコマンドに与える引数
-```
-
-例えばAWSのマネージメントコンソールを眺めている時間を計測と、30分を越えるとアラートするのであれば以下のように設定します
-(アラートの設定をPMやシニアエンジニアが行うので、エスカレーションへの障壁がさがります)
+This configuration file defines task names to be aggregated and (if set) alerts for time exceeded
 
 ```
-AWS	.*Amazon Web Services.*	1800	popup.bat	AWS_USe
+(1) Definition name (2) Regular expression of the window name to be aggregated (3) Time exceeded (in seconds) (4) Command to be executed when time exceeded (5) Arguments to be given to the command in “5)”.
 ```
 
-アラートを出さないでウィンドウ名と類型時間だけ計測する場合は以下のように③～⑤に「NO」を書きます
+For example, if you want to measure the time spent looking at the AWS management console and be alerted when it exceeds 30 minutes, set the following
+(PMs and senior engineers can set up alerts, which lowers the barrier to escalation)
 
 ```
-メモ帳	.*メモ帳.*	NO	NO	NO
+AWS . *Amazon Web Services.* 1800 popup.bat AWS_USe
 ```
 
-また、正規表現に当てはまらないウィンドウ名は全て「OTHER」にまとめられます。作業用BGMでYoutubeを開いた、といったものまで過剰監視しない作りになっています
-
-## スケジュール通知
-
-この設定ファイルでは設定した時間でアラートを実施します
-タスク集計定義とファイルを分けているのは、チーム共有のアラート設定、プラス、各自のアラートを追記する事で個別のアラートにも対応できるために分けています
+To measure only window name and typed time without alerting, write “NO” in (3) to (5) as follows
 
 ```
-①アラートを出す正規表現 ④実行されるコマンド  ⑥「⑤」のコマンドに与える引数
+Notepad . *Notebook . * NO NO NO NO	NO
 ```
 
-日時は以下のフォーマットで記録されます
+All window names that do not fit in the regular expression will be grouped into “OTHER”. (It is designed not to over-monitor even if you have opened Youtube with background music for work.
+
+## Schedule notifications
+
+This configuration file will implement alerts at set times
+The reason for separating the task aggregation definitions and files is to allow for team-shared alert settings, plus the ability to add your own alerts for individual alerts.
+
+```
+(1) Regular expressions to generate alerts (2) Alerts for each team member
+```
+
+The date and time are recorded in the following format.
 
 ```
 2025/01/06 13:45:38 Mon
 ```
 
-年、月、日、時刻、曜日です。例えば毎日10～13時にアラートを出したい場合は以下のように設定します
+The year, month, day, time, and day of the week. For example, if you want to be alerted every day from 10am to 1pm, you would set the following
 
 ```
-.*/.*/.* 1[0-3]:.*:.* .*	popup.bat	10-13HourAlert
+. */. */. * 1[0-3]:. *:. * . * popup.bat 10-13HourAlert
 ```
 
-月曜日の9:00であれば以下です
+If it is Monday at 9:00, then
 
 ```
-.*/.*/.* 9:00:00 Mon	popup.bat	MondayAlert
+. */. */. * 9:00:00 Mon popup.bat MondayAlert
 ```
 
-後述のループ間隔のオプションを広げ過ぎると、アラート出せない可能性があるので注意してください
+Note that if you extend the loop interval options too far (see below), you may not get an alert.
 
-# オプション
+# Option
 
 ```
   -debug
@@ -172,39 +172,39 @@ AWS	.*Amazon Web Services.*	1800	popup.bat	AWS_USe
   -loop int
         [-loop=incident check loop time (Seconds). ] (default 60)
   -outputconfig string
-        [-outputconfig=specify the output file of the work history.] (default "output.txt")
+        [-outputconfig=specify the output file of the work history.] (default “output.txt”)
   -scheduleconfig string
-        [-scheduleconfig=specify the configuration file for scheduled alerts.] (default "schedule.ini")
+        [-scheduleconfig=specify the configuration file for scheduled alerts.] (default “schedule.ini”)
   -tasksconfig string
-        [-tasksconfig=specify the task aggregation config file.] (default "tasks.ini")
-
+        [-tasksconfig=specify the task aggregation config file.] (default “tasks.ini”)
 ```
 
 ## -debug
 
-デバッグモードで動作します。色々出力されます
+Runs in debug mode. Various output is printed.
 
 ## -log
 
-デバッグモードで出たログを出力するオプションです
+Option to output the log from debug mode.
 
 ## -loop int
 
-全体の動作をループさせる間隔(秒)です<br>
-長すぎると正確に計測できないのでできるだけ短く、数秒単位で運用する方が良いでしょう。また、**スケジュール通知設定がループ間隔によって跨いでしまう場合は、アラートが出なくなってしまうのでその点の注意も必要です**
+Interval (in seconds) to loop the entire operation.<br>
+If it is too long, it cannot be measured accurately, so it is better to keep it as short as possible and operate in increments of a few seconds.
+Also, **if the schedule notification setting is crossed by the loop interval, alerts will not be issued, so be careful about this**.
 
 ## -outputconfig string
 
-ウィンドウ名と類型時間だけ計測するファイルをデフォルトの　output.txt　から変えたいときにこれでコンフィグファイル名を指定します<br>
-OSシャットダウン時にアップロード、同期する前提のため、常に計測ファイルは上書きされます。よって、不意のOS再起動が考えられる場合はこのファイル名を日時等に変更した方が良いでしょう
+If you want to change the file to measure only window name and typed time from the default output.txt, specify the name of the config file with this.<br>
+The measurement file is always overwritten because it is assumed to be uploaded and synchronized at OS shutdown. Therefore, if an unexpected OS reboot is possible, it is better to change the name of this file to the date and time, etc.
 
 ## -scheduleconfig string
 
-スケジュール通知設定ファイルをデフォルトの　schedule.ini　から変えたいときにこれでコンフィグファイル名を指定します
+If you want to change the schedule notification configuration file from the default schedule.ini, specify the configuration file name with this.
 
 ## -tasksconfig string
 
-タスク集計定義設定ファイルをデフォルトの　tasks.ini　から変えたいときにこれでコンフィグファイル名を指定します
+Specify the name of the configuration file when you want to change the task aggregation definition file from the default tasks.ini.
 
-# ライセンス
+# Lisence
 BSD 3-Clause
