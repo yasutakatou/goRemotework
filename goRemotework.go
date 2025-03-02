@@ -3,7 +3,7 @@
  *
  * @author    yasutakatou
  * @copyright 2025 yasutakatou
- * @license
+ * @license   BSD 3-Clause
  */
 package main
 
@@ -21,6 +21,8 @@ import (
 	"syscall"
 	"time"
 	"unsafe"
+
+	"github.com/ChromeTemp/Popup"
 )
 
 type taskListsData struct {
@@ -97,7 +99,11 @@ func scheduleAlert() {
 		dateRegex := regexp.MustCompile(rule.DATE)
 		if dateRegex.MatchString(nowDate) == true {
 			debugLog("dateRegex: " + rule.DATE)
-			go execCommand(rule.COMMAND, rule.MESSAGE)
+			if rule.COMMAND == "POPUP" {
+				Popup.Alert("popup", rule.MESSAGE)
+			} else {
+				go execCommand(rule.COMMAND, rule.MESSAGE)
+			}
 		}
 
 	}
@@ -123,7 +129,11 @@ func taskAlert(filename string, duration int) {
 					if rule.LIMIT != 0 && len(rule.COMMAND) != 0 && len(rule.MESSAGE) != 0 {
 						if tasklists[i].LIMIT-duration <= 0 {
 							tasklists[i].LIMIT = rule.LIMIT
-							go execCommand(rule.COMMAND, rule.MESSAGE)
+							if rule.COMMAND == "POPUP" {
+								Popup.Alert("popup", rule.MESSAGE)
+							} else {
+								go execCommand(rule.COMMAND, rule.MESSAGE)
+							}
 						} else {
 							tasklists[i].LIMIT = tasklists[i].LIMIT - duration
 						}
