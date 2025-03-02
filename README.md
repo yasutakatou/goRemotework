@@ -133,6 +133,18 @@ Notepad . *Notebook . * NO NO NO NO	NO
 
 All window names that do not fit in the regular expression will be grouped into “OTHER”. (It is designed not to over-monitor even if you have opened Youtube with background music for work.
 
+### Added pop-up window functionality (v0.2)
+
+Specify “POPUP” as the command name, followed by a message to display an OS-native popup
+
+```
+Chrome	.*Chrome.*	100	POPUP	ポップアップ テスト ！！
+```
+
+![image](https://github.com/user-attachments/assets/c7768c79-d3d9-431c-ac37-0632ab061edc)
+
+note) In previous versions, the only way to notify messages was to pass parameters to the command, so it was not possible to notify messages with spaces or non-English messages such as Japanese.
+
 ## Schedule notifications
 
 This configuration file will implement alerts at set times
@@ -161,6 +173,18 @@ If it is Monday at 9:00, then
 ```
 
 Note that if you extend the loop interval options too far (see below), you may not get an alert.
+
+### Added pop-up window functionality (v0.2)
+
+Specify “POPUP” as the command name, followed by a message to display an OS-native popup
+
+```
+Chrome	.*Chrome.*	100	POPUP	ポップアップ テスト ！！
+```
+
+![image](https://github.com/user-attachments/assets/c7768c79-d3d9-431c-ac37-0632ab061edc)
+
+note) In previous versions, the only way to notify messages was to pass parameters to the command, so it was not possible to notify messages with spaces or non-English messages such as Japanese.
 
 # Option
 
